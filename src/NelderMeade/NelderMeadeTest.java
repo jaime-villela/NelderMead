@@ -1,11 +1,16 @@
 package NelderMeade;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.time.format.DecimalStyle;
-
+import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
+
+class UserClass {
+    static double userFunc(double[] row) {
+        double retVal = Math.pow(row[0],2) - 4*row[0] + Math.pow(row[1], 2) - row[1] - row[0]*row[1];
+        // Force the returned value to 2 decimal places
+        return (double) Math.round(retVal * 100)/100;
+    }
+}
 
 public class NelderMeadeTest {
 
@@ -20,22 +25,24 @@ public class NelderMeadeTest {
     public void setUp() {
         nm = new NelderMeade();
         nm.setMatrix(matrix);
-        nm.func = (double[] row)->Math.pow(row[0],2) - 4*row[0] + Math.pow(row[1], 2) - row[1] - row[0]*row[1];
+        nm.func = UserClass::userFunc;
+        nm.calcBestGoodWorst();
     }
 
     @Test
-    public void testCalcMidpoint() throws Exception {
-        assertArrayEquals(nm.calcMidpoint(0,1), new double[]{0.6, 0.0});
+    public void testCalcBestGoodWorst() {
+        assertEquals(nm.evalFuncAtBestRow(), -3.36);
+        assertEquals(nm.evalFuncAtGoodRow(), -0.16);
+        assertEquals(nm.evalFuncAtWorstRow(), 0.0);
     }
 
     @Test
-    public void evalFuncAtV2() throws Exception {
-        assertEquals(nm.evalFuncOnRow(1), -3.36);
+    public void testReflectionPoint() throws Exception {
+        assertEquals(nm.evalFuncAtReflectPoint(), -4.48);
     }
 
     @Test
-    public void evalFuncAtV3() throws Exception {
-        // Unfortunately, I have to play tricks with rounding to get this test to pass.
-        assertEquals((double) Math.round(nm.evalFuncOnRow(2) * 100)/100, -0.16);
+    public void testExpansionPoint() throws Exception {
+        assertEquals(nm.evalFuncAtExpandPoint(), -5.88);
     }
 }
