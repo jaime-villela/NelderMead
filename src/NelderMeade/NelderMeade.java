@@ -7,30 +7,33 @@ public class NelderMeade {
 
     public NelderMeade() {}
 
-    public void setNumRows(int numRows) {
-        this.numRows = numRows;
-    }
-
-    public void setNumCols(int numCols) {
-        this.numCols = numCols;
-    }
-
     public void setMatrix(double[][] matrix) {
         this.matrix = matrix;
-    }
-
-    public boolean doDimsMatch() {
-        if ((matrix.length == numRows) && (matrix[0].length == numCols)) {
-            return true;
-        } else {
-            return false;
-        }
+        this.numRows = matrix.length;
+        this.numCols = matrix[0].length;
     }
 
     public double[] addRows(int row1, int row2) {
-        double[] retVal = new double[2];
-        retVal[0] = matrix[row1][0]+matrix[row2][0];
-        retVal[1] = matrix[row1][1]+matrix[row2][1];
+        double[] retVal = new double[this.numCols];
+
+        for (int i = 0; i < this.numCols; i++)
+            retVal[i] = matrix[row1][i] + matrix[row2][i];
+
+        return retVal;
+    }
+
+    public double[] divByN(double[] row, int divisor) {
+        double[] retVal = new double[this.numCols];
+
+        try {
+            for (int i = 0; i < this.numCols; i++)
+                retVal[i] = row[i] / divisor;
+        }
+
+        catch (ArithmeticException e) {
+            System.out.println("Cannot divide by zero");
+        }
+
         return retVal;
     }
 }

@@ -21,14 +21,12 @@ public class NelderMeadeTest {
     }
 
     @Test
-    public void testDims() throws Exception {
-        nm.setNumCols(2);
-        nm.setNumRows(3);
-        assertTrue(nm.doDimsMatch());
+    public void testAddTwoRows() throws Exception {
+        assertArrayEquals(nm.addRows(0,1), new double[]{1.2,0.0});
     }
 
     @Test
-    public void testAddTwoRows() throws Exception {
-        assertArrayEquals(nm.addRows(0,1), new double[]{1.2,0.0});
+    public void testDivByN() throws Exception {
+        assertArrayEquals(nm.divByN(nm.addRows(0,1), 2), new double[]{0.6, 0.0});
     }
 }
