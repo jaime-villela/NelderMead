@@ -15,7 +15,7 @@ class UserClass {
 public class NelderMeadeTest {
 
     private NelderMeade nm;
-    private double[][] matrix = {
+    private double[][] points = {
             {0, 0},
             {1.2, 0},
             {0, 0.8}
@@ -24,16 +24,16 @@ public class NelderMeadeTest {
     @BeforeEach
     public void setUp() {
         nm = new NelderMeade();
-        nm.setMatrix(matrix);
+        nm.setMatrix(points);
         nm.func = UserClass::userFunc;
         nm.calcBestGoodWorst();
     }
 
     @Test
     public void testCalcBestGoodWorst() {
-        assertEquals(nm.evalFuncAtBestRow(), -3.36);
-        assertEquals(nm.evalFuncAtGoodRow(), -0.16);
-        assertEquals(nm.evalFuncAtWorstRow(), 0.0);
+        assertEquals(nm.evalFuncAtBestPoint(), -3.36);
+        assertEquals(nm.evalFuncAtGoodPoint(), -0.16);
+        assertEquals(nm.evalFuncAtWorstPoint(), 0.0);
     }
 
     @Test

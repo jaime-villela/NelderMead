@@ -1,8 +1,5 @@
 package NelderMeade;
 
-import org.codehaus.groovy.runtime.typehandling.BigDecimalMath;
-
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -14,7 +11,7 @@ interface UserDefinedFunc {
 public class NelderMeade {
     private int numRows;
     private int numCols;
-    private double[][] matrix;
+    private double[][] allPoints;
     private int best;
     private int good;
     private int worst;
@@ -22,68 +19,86 @@ public class NelderMeade {
     private double[] expandPoint;
     private double[] contractPoint;
     private double[] shrinkPoint;
-    private double[] midpointGoodSide;
+    private double[] goodMidpoint;
+    private double[] badMidpoint;
     UserDefinedFunc func;
 
     public NelderMeade() {}
 
     public void setMatrix(double[][] matrix) {
-        this.matrix = matrix;
+        this.allPoints = matrix;
         this.numRows = matrix.length;
         this.numCols = matrix[0].length;
     }
 
     private void calcContractPoint() {
-        this.contractPoint = calcMidpoint(this.matrix[worst], midpointGoodSide);
+        this.contractPoint = calcMidpoint(this.allPoints[worst], goodMidpoint);
     }
 
     public double evalFuncAtContractPoint() {
-        return evalFuncOnRow(this.contractPoint);
+        return evalFuncAtPoint(this.contractPoint);
+    }
+
+    private boolean areBestGoodWorstEqual() {
+        boolean doesBestEqualGood = Double.compare(evalFuncAtBestPoint(), evalFuncAtGoodPoint()) == 0 ? true : false;
+        boolean doesGoodEqualWorst = Double.compare(evalFuncAtGoodPoint(), evalFuncAtWorstPoint()) == 0 ? true : false;
+        return doesBestEqualGood && doesGoodEqualWorst;
+
+    }
+
+    private void swapPoints(double[] point1, double[] point2) {
+        double[] tmpArr;
+
+        tmpArr = Arrays.copyOfRange(point1, 0, point1.length);
+        point1 = Arrays.copyOfRange(point2, 0, point2.length);
+        point2 = Arrays.copyOfRange(tmpArr, 0, tmpArr.length);
     }
 
     public void minimize() {
-        while (true) { // while all vertices not converged
-            if (evalFuncAtReflectPoint() < evalFuncAtGoodRow()) {
-                if (evalFuncAtBestRow() < evalFuncAtReflectPoint()) {
-                    //replace W with R
+        while (! areBestGoodWorstEqual()) { // while all vertices not converged
+            if (evalFuncAtReflectPoint() < evalFuncAtGoodPoint()) {
+                if (evalFuncAtBestPoint() < evalFuncAtReflectPoint()) {
+                    swapPoints(allPoints[worst], reflectPoint);
                 } else {
-                    if (evalFuncAtExpandPoint() < evalFuncAtBestRow()) {
-                        // replace W with E
+                    if (evalFuncAtExpandPoint() < evalFuncAtBestPoint()) {
+                        swapPoints(reflectPoint, expandPoint);// replace W with E
                     } else {
-                        // replace W with R
+                        swapPoints(allPoints[worst], reflectPoint);// replace W with R
                     }
                 }
             } else {
-                if (evalFuncAtReflectPoint() < evalFuncAtWorstRow()) {
-                    // replace W with R
+                if (evalFuncAtReflectPoint() < evalFuncAtWorstPoint()) {
+                    swapPoints(allPoints[worst], reflectPoint);// replace W with R
                 }
-                // compute C = (W+M)/2
+                calcContractPoint(); // compute C = (W+M)/2
 
-                if (evalFuncAtContractPoint() < evalFuncAtWorstRow()) {
-                    // replace W with C
+                if (evalFuncAtContractPoint() < evalFuncAtWorstPoint()) {
+                    swapPoints(allPoints[worst], contractPoint);// replace W with C
                 } else {
                     // compute S and f(S)
                 }
                 // replace W with S
                 // replace G with M
             }
+
+            calcBestGoodWorst();
         }
     }
 
-    private double[] addRows(double[] row1, double[] row2) {
+    private double[] addPoints(double[] point1, double[] point2) {
         double[] retVal = new double[this.numCols];
 
         for (int i = 0; i < this.numCols; i++)
-            retVal[i] = row1[i] + row2[i];
+            retVal[i] = point1[i] + point2[i];
 
         return retVal;
     }
 
-    private double[] subtractRows(double[] row1, double[] row2) {
+    private double[] subtractPoints(double[] point1, double[] point2) {
         double[] retVal = new double[this.numCols];
 
         for (int i = 0; i < this.numCols; i++)
-            retVal[i] = row1[i] - row2[i];
+            retVal[i] = point1[i] - point2[i];
 
         return retVal;
     }
@@ -112,11 +127,11 @@ public class NelderMeade {
         return retVal;
     }
 
-    private double[] calcMidpoint(double[] row1, double[] row2) {
-        return divByN(addRows(row1, row2), 2);
+    private double[] calcMidpoint(double[] point1, double[] point2) {
+        return divByN(addPoints(point1, point2), 2);
     }
 
-    private double evalFuncOnRow(double[] row) {
+    private double evalFuncAtPoint(double[] row) {
         return this.func.calculate(row);
     }
 
@@ -125,7 +140,7 @@ public class NelderMeade {
 
         for (int i = 0; i < this.numRows; i++) {
             values[i][0] = i;
-            values[i][1] = this.func.calculate(matrix[i]);
+            values[i][1] = this.func.calculate(allPoints[i]);
         }
 
         Arrays.sort(values, Comparator.comparingDouble(a->a[1]));
@@ -135,33 +150,33 @@ public class NelderMeade {
         this.worst = (int)values[2][0];
     }
 
-    public double evalFuncAtBestRow() {
-        return this.func.calculate(matrix[best]);
+    public double evalFuncAtBestPoint() {
+        return this.func.calculate(allPoints[best]);
     }
 
-    public double evalFuncAtGoodRow() {
-        return this.func.calculate(matrix[good]);
+    public double evalFuncAtGoodPoint() {
+        return this.func.calculate(allPoints[good]);
     }
 
-    public double evalFuncAtWorstRow() {
-        return this.func.calculate(matrix[worst]);
+    public double evalFuncAtWorstPoint() {
+        return this.func.calculate(allPoints[worst]);
     }
 
     private void calcGoodMidpoint() {
-        midpointGoodSide = calcMidpoint(this.matrix[best], this.matrix[good]);
+        goodMidpoint = calcMidpoint(this.allPoints[best], this.allPoints[good]);
     }
 
     private void calcReflectionPoint() {
         double[] modMidpoint;
 
         calcGoodMidpoint();
-        modMidpoint = multByN(this.midpointGoodSide, 2);
-        reflectPoint = subtractRows(modMidpoint, this.matrix[worst]);
+        modMidpoint = multByN(this.goodMidpoint, 2);
+        reflectPoint = subtractPoints(modMidpoint, this.allPoints[worst]);
     }
 
     public double evalFuncAtReflectPoint() {
         calcReflectionPoint();
-        return evalFuncOnRow(this.reflectPoint);
+        return evalFuncAtPoint(this.reflectPoint);
     }
 
     private void calcExpandPoint() {
@@ -170,12 +185,12 @@ public class NelderMeade {
         calcGoodMidpoint();
         calcReflectionPoint();
         modReflectPoint = multByN(this.reflectPoint, 2);
-        this.expandPoint = subtractRows(modReflectPoint, this.midpointGoodSide);
+        this.expandPoint = subtractPoints(modReflectPoint, this.goodMidpoint);
     }
 
     public double evalFuncAtExpandPoint() {
         calcExpandPoint();;
-        return evalFuncOnRow(this.expandPoint);
+        return evalFuncAtPoint(this.expandPoint);
     }
 
 }
