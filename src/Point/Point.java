@@ -1,54 +1,63 @@
 package Point;
 
+import com.siyeh.ig.numeric.DivideByZeroInspection;
+import org.jdom.internal.ArrayCopy;
+
+import java.util.Arrays;
+
 public class Point {
     private double[] coords;
 
-    public Point(double ...args) {
+    Point(double... args) {
         int i = 0;
 
-        if (args.length < 2) {
-            System.out.println("A point in space must have at least 2 coordinates.");
-        }
+        if (args == null)
+            throw new IllegalArgumentException("Cannot take null as an argument.");
 
-        this.coords = new double[args.length];
-        for (double d : args) {
-            coords[i++] = d;
-        }
+        if (args.length < 2)
+            throw new IllegalArgumentException("A point in space must have at least 2 coordinates.");
+
+        this.coords = Arrays.copyOf(args, args.length);
     }
 
-    public Point() {}
-
     public Point add(Point b) {
-        Point c = new Point(0,0);
+        Point c = new Point(this.coords);
 
-        try {
-            for (int i = 0; i < this.coords.length; i++) {
-                c.coords[i] = this.coords[i] + b.coords[i];
-            }
-        }
+        for (int i = 0; i < this.coords.length; i++)
+                c.coords[i] += b.coords[i];
 
-        catch (Exception e) {
-            System.out.println("Addition failed:");
-            System.out.println(e);
-        }
         return c;
     }
 
     public Point sub(Point b) {
-        Point c;
+        Point c = new Point(this.coords);
 
-        c.coords = new double[this.coords.length];
+        for (int i = 0; i < this.coords.length; i++)
+            c.coords[i] -= b.coords[i];
+
+        return c;
+    }
+
+    public Point multByN(int mulitplier) {
+        Point c = new Point(this.coords);
+
+        for (int i = 0; i < c.coords.length; i++)
+            c.coords[i] *= mulitplier;
+
+        return c;
+    }
+
+    public Point divByN(int divisor) {
+        Point c = new Point(this.coords);
 
         try {
-            for (int i = 0; i < this.coords.length; i++) {
-                c.coords[i] = this.coords[i] - b.coords[i];
-            }
+            for (int i = 0; i < c.coords.length; i++)
+                c.coords[i] /= divisor;
+        } catch (ArithmeticException e) {
+            System.out.println("Division by zero.");
+            return null;
         }
 
-        catch (Exception e) {
-            System.out.println("Subtraction failed:");
-            System.out.println(e);
-        }
         return c;
     }
 
