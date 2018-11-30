@@ -1,11 +1,11 @@
-package Point;
+package MyVertex;
 
 import java.util.Arrays;
 
-public class Point {
+public class MyVertex {
     private double[] coordArray;
 
-    Point(double... args) {
+    public MyVertex(double... args) {
         if (args == null)
             throw new IllegalArgumentException("Cannot take null as an argument.");
 
@@ -15,8 +15,8 @@ public class Point {
         this.coordArray = Arrays.copyOf(args, args.length);
     }
 
-    public Point add(Point b) {
-        Point c = new Point(this.coordArray);
+    public MyVertex add(MyVertex b) {
+        MyVertex c = new MyVertex(this.coordArray);
 
         for (int i = 0; i < this.coordArray.length; i++)
                 c.coordArray[i] += b.coordArray[i];
@@ -24,8 +24,8 @@ public class Point {
         return c;
     }
 
-    public Point sub(Point b) {
-        Point c = new Point(this.coordArray);
+    public MyVertex sub(MyVertex b) {
+        MyVertex c = new MyVertex(this.coordArray);
 
         for (int i = 0; i < this.coordArray.length; i++)
             c.coordArray[i] -= b.coordArray[i];
@@ -33,8 +33,8 @@ public class Point {
         return c;
     }
 
-    public Point multByN(int mulitplier) {
-        Point c = new Point(this.coordArray);
+    public MyVertex multByN(int mulitplier) {
+        MyVertex c = new MyVertex(this.coordArray);
 
         for (int i = 0; i < c.coordArray.length; i++)
             c.coordArray[i] *= mulitplier;
@@ -42,8 +42,8 @@ public class Point {
         return c;
     }
 
-    public Point divByN(int divisor) {
-        Point c = new Point(this.coordArray);
+    public MyVertex divByN(int divisor) {
+        MyVertex c = new MyVertex(this.coordArray);
 
         try {
             for (int i = 0; i < c.coordArray.length; i++)
@@ -57,6 +57,6 @@ public class Point {
     }
 
     public double[] getCoords() {
-        return this.coordArray;
+        return coordArray;
     }
 }

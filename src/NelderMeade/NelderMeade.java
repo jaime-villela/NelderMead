@@ -1,200 +1,211 @@
 package NelderMeade;
 
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
+
+import MyVertex.MyVertex;
+import jdk.nashorn.api.tree.Tree;
 
 @FunctionalInterface
 interface UserDefinedFunc {
-    double calculate(double[] row);
+    double calculate(double[] coords);
 }
 
 public class NelderMeade {
-    private int numRows;
-    private int numCols;
-    private double[][] allPoints;
+    private ArrayList<MyVertex> allVertices;
     private int best;
     private int good;
     private int worst;
-    private double[] reflectPoint;
-    private double[] expandPoint;
-    private double[] contractPoint;
-    private double[] shrinkPoint;
-    private double[] goodMidpoint;
-    private double[] badMidpoint;
+    private MyVertex reflectMyVertex;
+    private MyVertex expandMyVertex;
+    private MyVertex contractMyVertex;
+    private MyVertex goodMidpoint;
+    private MyVertex badMidpoint;
     UserDefinedFunc func;
+    private int numPoints;
+    private int numIterations;
 
     NelderMeade() {}
 
     NelderMeade(double[][] pointMatrix) {
+        int numRows = pointMatrix.length;
 
-    }
+        allVertices = new ArrayList<MyVertex>();
 
-    public void setMatrix(double[][] matrix) {
-        this.allPoints = matrix;
-        this.numRows = matrix.length;
-        this.numCols = matrix[0].length;
+        for(int i = 0; i < numRows; i++)
+            allVertices.add(new MyVertex(pointMatrix[i]));
+
+        numPoints = allVertices.size();
     }
 
     private void calcContractPoint() {
-        this.contractPoint = calcMidpoint(this.allPoints[worst], goodMidpoint);
+        calcGoodMidpoint();
+        contractMyVertex = calcMidpoint(allVertices.get(worst), goodMidpoint);
     }
 
     public double evalFuncAtContractPoint() {
-        return evalFuncAtPoint(this.contractPoint);
+        calcContractPoint();
+        return evalFuncAtPoint(contractMyVertex);
     }
 
-    private boolean areBestGoodWorstEqual() {
-        boolean doesBestEqualGood = Double.compare(evalFuncAtBestPoint(), evalFuncAtGoodPoint()) == 0 ? true : false;
-        boolean doesGoodEqualWorst = Double.compare(evalFuncAtGoodPoint(), evalFuncAtWorstPoint()) == 0 ? true : false;
-        return doesBestEqualGood && doesGoodEqualWorst;
+    public boolean verticesNotConverged() {
+        boolean notConverged = false;
+        double firstVal = evalFuncAtPoint(allVertices.get(0));
 
+        for (MyVertex v : allVertices) {
+            if(Double.compare(evalFuncAtPoint(v), firstVal) != 0)
+                notConverged = true;
+        }
+
+        return notConverged;
     }
 
-    private void swapPoints(double[] point1, double[] point2) {
-        double[] tmpArr;
-
-        tmpArr = Arrays.copyOfRange(point1, 0, point1.length);
-        point1 = Arrays.copyOfRange(point2, 0, point2.length);
-        point2 = Arrays.copyOfRange(tmpArr, 0, tmpArr.length);
+    public void replaceVertexAtIndex(MyVertex p, int index) {
+        allVertices.set(index, p);
     }
 
-    public void minimize() {
-        while (! areBestGoodWorstEqual()) { // while all vertices not converged
-            if (evalFuncAtReflectPoint() < evalFuncAtGoodPoint()) {
-                if (evalFuncAtBestPoint() < evalFuncAtReflectPoint()) {
-                    swapPoints(allPoints[worst], reflectPoint);
-                } else {
-                    if (evalFuncAtExpandPoint() < evalFuncAtBestPoint()) {
-                        swapPoints(reflectPoint, expandPoint);// replace W with E
-                    } else {
-                        swapPoints(allPoints[worst], reflectPoint);// replace W with R
-                    }
-                }
-            } else {
-                if (evalFuncAtReflectPoint() < evalFuncAtWorstPoint()) {
-                    swapPoints(allPoints[worst], reflectPoint);// replace W with R
-                }
-                calcContractPoint(); // compute C = (W+M)/2
+    public void findLocalMin() {
+        numIterations = 1;
 
-                if (evalFuncAtContractPoint() < evalFuncAtWorstPoint()) {
-                    swapPoints(allPoints[worst], contractPoint);// replace W with C
-                } else {
-                    // compute S and f(S)
-                }
-                // replace W with S
-                // replace G with M
-            }
+        while (verticesNotConverged()) {
+            if (isItBetterToReflect())
+                reflectOrExtend();
+            else
+                contractOrShrink();
 
             calcBestGoodWorst();
+            numIterations++;
         }
     }
 
-    private double[] addPoints(double[] point1, double[] point2) {
-        double[] retVal = new double[this.numCols];
-
-        for (int i = 0; i < this.numCols; i++)
-            retVal[i] = point1[i] + point2[i];
-
-        return retVal;
+    private boolean isItBetterToReflect() {
+        return (evalFuncAtReflectPoint() < evalFuncAtGoodPoint()) ? true : false;
     }
 
-    private double[] subtractPoints(double[] point1, double[] point2) {
-        double[] retVal = new double[this.numCols];
+    private void contractOrShrink() {
+        if (evalFuncAtReflectPoint() < evalFuncAtWorstPoint())
+            replaceVertexAtIndex(reflectMyVertex, worst);
 
-        for (int i = 0; i < this.numCols; i++)
-            retVal[i] = point1[i] - point2[i];
+        calcContractPoint();
 
-        return retVal;
-    }
-
-    private double[] multByN(double[] row, int multiplier) {
-        double[] retVal = new double[this.numCols];
-
-        for (int i = 0; i < this.numCols; i++)
-            retVal[i] = row[i] * multiplier;
-
-        return retVal;
-    }
-
-    private double[] divByN(double[] row, int divisor) {
-        double[] retVal = new double[this.numCols];
-
-        try {
-            for (int i = 0; i < this.numCols; i++)
-                retVal[i] = row[i] / divisor;
+        if (evalFuncAtContractPoint() < evalFuncAtWorstPoint()) {
+            replaceVertexAtIndex(contractMyVertex, worst);
+        } else {
+            evalFuncAtBadMidpoint();
+            replaceVertexAtIndex(badMidpoint, worst);
+            calcGoodMidpoint();
+            replaceVertexAtIndex(goodMidpoint, good);
         }
+    }
 
-        catch (ArithmeticException e) {
-            System.out.println("Cannot divide by zero");
+    private void reflectOrExtend() {
+        if (evalFuncAtBestPoint() < evalFuncAtReflectPoint()) {
+            replaceVertexAtIndex(reflectMyVertex, worst);
+        } else {
+
+            calcExpandPoint();
+
+            if (evalFuncAtExpandPoint() < evalFuncAtBestPoint()) {
+                replaceVertexAtIndex(expandMyVertex, worst);
+            } else {
+                replaceVertexAtIndex(reflectMyVertex,worst);
+            }
         }
-
-        return retVal;
     }
 
-    private double[] calcMidpoint(double[] point1, double[] point2) {
-        return divByN(addPoints(point1, point2), 2);
+    private MyVertex calcMidpoint(MyVertex myVertex1, MyVertex myVertex2) {
+        MyVertex c = myVertex1.add(myVertex2);
+        return c.divByN(2);
     }
 
-    private double evalFuncAtPoint(double[] row) {
-        return this.func.calculate(row);
+    private double evalFuncAtPoint(MyVertex p) {
+        return func.calculate(p.getCoords());
     }
 
     public void calcBestGoodWorst() {
-        double[][] values = new double[this.numRows][this.numCols];
+        /*
+        double[][] values = new double[numPoints][2];
 
-        for (int i = 0; i < this.numRows; i++) {
+        for (int i = 0; i < numPoints; i++) {
             values[i][0] = i;
-            values[i][1] = this.func.calculate(allPoints[i]);
+            values[i][1] = func.calculate(allVertices.get(i).getCoords());
         }
 
         Arrays.sort(values, Comparator.comparingDouble(a->a[1]));
 
-        this.best = (int)values[0][0];
-        this.good = (int)values[1][0];
-        this.worst = (int)values[2][0];
+        best = (int)values[0][0];
+        good = (int)values[1][0];
+        worst = (int)values[2][0];
+        */
+        HashMap<Double, Integer> values = new HashMap<Double, Integer>();
+        int i = 0;
+
+        for (MyVertex v : allVertices) {
+            values.put(evalFuncAtPoint(v), i++);
+        }
+
+        double[] arr = values.values().toArray();
+        worst = (int)values.values().toArray()[0];
+        good = (int)values.values().toArray()[1];
+        best = (int)values.values().toArray()[2];
     }
 
     public double evalFuncAtBestPoint() {
-        return this.func.calculate(allPoints[best]);
+        return func.calculate(allVertices.get(best).getCoords());
     }
 
     public double evalFuncAtGoodPoint() {
-        return this.func.calculate(allPoints[good]);
+        return func.calculate(allVertices.get(good).getCoords());
     }
 
     public double evalFuncAtWorstPoint() {
-        return this.func.calculate(allPoints[worst]);
+        return func.calculate(allVertices.get(worst).getCoords());
     }
 
     private void calcGoodMidpoint() {
-        goodMidpoint = calcMidpoint(this.allPoints[best], this.allPoints[good]);
+        goodMidpoint = calcMidpoint(allVertices.get(best), allVertices.get(good));
     }
 
     private void calcReflectionPoint() {
-        double[] modMidpoint;
+        MyVertex modMidpoint;
 
         calcGoodMidpoint();
-        modMidpoint = multByN(this.goodMidpoint, 2);
-        reflectPoint = subtractPoints(modMidpoint, this.allPoints[worst]);
+        modMidpoint = goodMidpoint.multByN(2);
+        reflectMyVertex = modMidpoint.sub(allVertices.get(worst));
     }
 
     public double evalFuncAtReflectPoint() {
         calcReflectionPoint();
-        return evalFuncAtPoint(this.reflectPoint);
+        return evalFuncAtPoint(reflectMyVertex);
     }
 
     private void calcExpandPoint() {
-        double[] modReflectPoint;
+        MyVertex modReflectMyVertex;
 
         calcGoodMidpoint();
         calcReflectionPoint();
-        modReflectPoint = multByN(this.reflectPoint, 2);
-        this.expandPoint = subtractPoints(modReflectPoint, this.goodMidpoint);
+        modReflectMyVertex = reflectMyVertex.multByN(2);
+        expandMyVertex = modReflectMyVertex.sub(goodMidpoint);
     }
 
     public double evalFuncAtExpandPoint() {
         calcExpandPoint();;
-        return evalFuncAtPoint(this.expandPoint);
+        return evalFuncAtPoint(this.expandMyVertex);
     }
 
+    public void calcBadMidpoint() {
+        badMidpoint = calcMidpoint(allVertices.get(best), allVertices.get(worst));
+    }
+
+    public double evalFuncAtBadMidpoint() {
+        calcBadMidpoint();;
+        return evalFuncAtPoint(badMidpoint);
+    }
+
+    public int getNumPoints() {
+        return numPoints;
+    }
+
+    public int getNumIterations() {
+        return numIterations;
+    }
 }
