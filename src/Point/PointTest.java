@@ -1,11 +1,7 @@
 package Point;
 
-import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -82,8 +78,7 @@ public class PointTest {
 
     @Test
     public void divideByZeroException() throws Exception {
-        Point c = new Point(0,0);
-        exception = assertThrows(ArithmeticException.class, ()->{c.divByN(0);});
+        ArithmeticException exception = assertThrows(ArithmeticException.class, ()->{ a.divByN(0); });
         assertEquals("Division by zero.", exception.getMessage());
     }
 }

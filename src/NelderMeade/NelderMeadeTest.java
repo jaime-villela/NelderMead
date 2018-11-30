@@ -2,6 +2,9 @@ package NelderMeade;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserClass {
@@ -27,6 +30,17 @@ public class NelderMeadeTest {
         nm.setMatrix(points);
         nm.func = UserClass::userFunc;
         nm.calcBestGoodWorst();
+    }
+
+    @Test
+    public void canCreate() throws Exception {
+        double[][] points = {
+                {0, 0},
+                {1.2, 0},
+                {0, 0.8}
+        };
+        NelderMeade nm = new NelderMeade(points);
+        assertThat(nm, instanceOf(NelderMeade.class));
     }
 
     @Test

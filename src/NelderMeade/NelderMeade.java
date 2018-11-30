@@ -23,7 +23,11 @@ public class NelderMeade {
     private double[] badMidpoint;
     UserDefinedFunc func;
 
-    public NelderMeade() {}
+    NelderMeade() {}
+
+    NelderMeade(double[][] pointMatrix) {
+
+    }
 
     public void setMatrix(double[][] matrix) {
         this.allPoints = matrix;

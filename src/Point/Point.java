@@ -1,58 +1,53 @@
 package Point;
 
-import com.siyeh.ig.numeric.DivideByZeroInspection;
-import org.jdom.internal.ArrayCopy;
-
 import java.util.Arrays;
 
 public class Point {
-    private double[] coords;
+    private double[] coordArray;
 
     Point(double... args) {
-        int i = 0;
-
         if (args == null)
             throw new IllegalArgumentException("Cannot take null as an argument.");
 
         if (args.length < 2)
             throw new IllegalArgumentException("A point in space must have at least 2 coordinates.");
 
-        this.coords = Arrays.copyOf(args, args.length);
+        this.coordArray = Arrays.copyOf(args, args.length);
     }
 
     public Point add(Point b) {
-        Point c = new Point(this.coords);
+        Point c = new Point(this.coordArray);
 
-        for (int i = 0; i < this.coords.length; i++)
-                c.coords[i] += b.coords[i];
+        for (int i = 0; i < this.coordArray.length; i++)
+                c.coordArray[i] += b.coordArray[i];
 
         return c;
     }
 
     public Point sub(Point b) {
-        Point c = new Point(this.coords);
+        Point c = new Point(this.coordArray);
 
-        for (int i = 0; i < this.coords.length; i++)
-            c.coords[i] -= b.coords[i];
+        for (int i = 0; i < this.coordArray.length; i++)
+            c.coordArray[i] -= b.coordArray[i];
 
         return c;
     }
 
     public Point multByN(int mulitplier) {
-        Point c = new Point(this.coords);
+        Point c = new Point(this.coordArray);
 
-        for (int i = 0; i < c.coords.length; i++)
-            c.coords[i] *= mulitplier;
+        for (int i = 0; i < c.coordArray.length; i++)
+            c.coordArray[i] *= mulitplier;
 
         return c;
     }
 
     public Point divByN(int divisor) {
-        Point c = new Point(this.coords);
+        Point c = new Point(this.coordArray);
 
         try {
-            for (int i = 0; i < c.coords.length; i++)
-                c.coords[i] /= divisor;
+            for (int i = 0; i < c.coordArray.length; i++)
+                c.coordArray[i] /= divisor;
         } catch (ArithmeticException e) {
             System.out.println("Division by zero.");
             return null;
@@ -62,6 +57,6 @@ public class Point {
     }
 
     public double[] getCoords() {
-        return this.coords;
+        return this.coordArray;
     }
 }
