@@ -3,7 +3,6 @@ package NelderMeade;
 import java.util.*;
 
 import MyVertex.MyVertex;
-import jdk.nashorn.api.tree.Tree;
 
 @FunctionalInterface
 interface UserDefinedFunc {
@@ -15,16 +14,13 @@ public class NelderMeade {
     private int best;
     private int good;
     private int worst;
-    private MyVertex reflectMyVertex;
-    private MyVertex expandMyVertex;
-    private MyVertex contractMyVertex;
+    private MyVertex reflectedVertex;
+    private MyVertex expandedVertex;
+    private MyVertex contractedVertex;
     private MyVertex goodMidpoint;
     private MyVertex badMidpoint;
     UserDefinedFunc func;
     private int numPoints;
-    private int numIterations;
-
-    NelderMeade() {}
 
     NelderMeade(double[][] pointMatrix) {
         int numRows = pointMatrix.length;
@@ -39,76 +35,79 @@ public class NelderMeade {
 
     private void calcContractPoint() {
         calcGoodMidpoint();
-        contractMyVertex = calcMidpoint(allVertices.get(worst), goodMidpoint);
-    }
-
-    public double evalFuncAtContractPoint() {
-        calcContractPoint();
-        return evalFuncAtPoint(contractMyVertex);
+        contractedVertex = calcMidpoint(allVertices.get(worst), goodMidpoint);
     }
 
     public boolean verticesNotConverged() {
         boolean notConverged = false;
-        double firstVal = evalFuncAtPoint(allVertices.get(0));
+        double bestVal = evalFuncAtPoint(allVertices.get(best));
 
         for (MyVertex v : allVertices) {
-            if(Double.compare(evalFuncAtPoint(v), firstVal) != 0)
+            if(Double.compare(evalFuncAtPoint(v), bestVal) != 0)
                 notConverged = true;
         }
 
         return notConverged;
     }
 
-    public void replaceVertexAtIndex(MyVertex p, int index) {
-        allVertices.set(index, p);
+    public double evalFuncAtContractPoint() {
+        calcContractPoint();
+        return evalFuncAtPoint(contractedVertex);
     }
 
-    public void findLocalMin() {
-        numIterations = 1;
-
-        while (verticesNotConverged()) {
-            if (isItBetterToReflect())
-                reflectOrExtend();
-            else
-                contractOrShrink();
-
-            calcBestGoodWorst();
-            numIterations++;
-        }
+    public void replaceVertexAtIndex(MyVertex p, int index) {
+        allVertices.set(index, p);
     }
 
     private boolean isItBetterToReflect() {
         return (evalFuncAtReflectPoint() < evalFuncAtGoodPoint()) ? true : false;
     }
 
+    private boolean isContractionPointBetterThanWorst() {
+        return evalFuncAtContractPoint() < evalFuncAtWorstPoint();
+    }
+
+    private void shrinkTheSimplex() {
+        calcBadMidpoint();
+        replaceVertexAtIndex(badMidpoint, worst);
+        calcGoodMidpoint();
+        replaceVertexAtIndex(goodMidpoint, good);
+    }
+
+    private boolean isReflectionBetterThanWorst() {
+        return evalFuncAtReflectPoint() < evalFuncAtWorstPoint();
+    }
+
     private void contractOrShrink() {
-        if (evalFuncAtReflectPoint() < evalFuncAtWorstPoint())
-            replaceVertexAtIndex(reflectMyVertex, worst);
+        if (isReflectionBetterThanWorst())
+            replaceVertexAtIndex(reflectedVertex, worst);
 
         calcContractPoint();
 
-        if (evalFuncAtContractPoint() < evalFuncAtWorstPoint()) {
-            replaceVertexAtIndex(contractMyVertex, worst);
-        } else {
-            evalFuncAtBadMidpoint();
-            replaceVertexAtIndex(badMidpoint, worst);
-            calcGoodMidpoint();
-            replaceVertexAtIndex(goodMidpoint, good);
-        }
+        if (isContractionPointBetterThanWorst())
+            replaceVertexAtIndex(contractedVertex, worst);
+        else
+            shrinkTheSimplex();
+    }
+
+    private boolean isBestBetterThanReflection() {
+        return evalFuncAtBestPoint() < evalFuncAtReflectPoint();
+    }
+
+    private boolean isExpansionBetterThanBest() {
+        return evalFuncAtExpandPoint() < evalFuncAtBestPoint();
     }
 
     private void reflectOrExtend() {
-        if (evalFuncAtBestPoint() < evalFuncAtReflectPoint()) {
-            replaceVertexAtIndex(reflectMyVertex, worst);
-        } else {
-
+        if (isBestBetterThanReflection())
+            replaceVertexAtIndex(reflectedVertex, worst);
+        else {
             calcExpandPoint();
 
-            if (evalFuncAtExpandPoint() < evalFuncAtBestPoint()) {
-                replaceVertexAtIndex(expandMyVertex, worst);
-            } else {
-                replaceVertexAtIndex(reflectMyVertex,worst);
-            }
+            if (isExpansionBetterThanBest())
+                replaceVertexAtIndex(expandedVertex, worst);
+            else
+                replaceVertexAtIndex(reflectedVertex,worst);
         }
     }
 
@@ -121,32 +120,35 @@ public class NelderMeade {
         return func.calculate(p.getCoords());
     }
 
-    public void calcBestGoodWorst() {
-        /*
-        double[][] values = new double[numPoints][2];
-
-        for (int i = 0; i < numPoints; i++) {
-            values[i][0] = i;
-            values[i][1] = func.calculate(allVertices.get(i).getCoords());
-        }
-
-        Arrays.sort(values, Comparator.comparingDouble(a->a[1]));
-
-        best = (int)values[0][0];
-        good = (int)values[1][0];
-        worst = (int)values[2][0];
-        */
-        HashMap<Double, Integer> values = new HashMap<Double, Integer>();
+    private HashMap<Integer, Double> evalFuncAtAllPoints() {
+        HashMap<Integer, Double> values = new HashMap<Integer, Double>();
         int i = 0;
 
-        for (MyVertex v : allVertices) {
-            values.put(evalFuncAtPoint(v), i++);
-        }
+        for (MyVertex v : allVertices)
+            values.put(i++, evalFuncAtPoint(v));
 
-        double[] arr = values.values().toArray();
-        worst = (int)values.values().toArray()[0];
-        good = (int)values.values().toArray()[1];
-        best = (int)values.values().toArray()[2];
+        return values;
+    }
+
+    private List<Map.Entry<Integer, Double>> sortAllValues(HashMap<Integer, Double> hm) {
+        Set<Map.Entry<Integer, Double>> set = hm.entrySet();
+        List<Map.Entry<Integer, Double>> list = new ArrayList<Map.Entry<Integer, Double>>(set);
+        Collections.sort(list, new Comparator<Map.Entry<Integer, Double>>() {
+            @Override
+            public int compare(Map.Entry<Integer, Double> entry1, Map.Entry<Integer, Double> entry2) {
+                return (entry2.getValue().compareTo(entry1.getValue()));
+            }
+        });
+        return list;
+    }
+
+    public void calcBestGoodWorst() {
+        HashMap<Integer, Double> allValues = evalFuncAtAllPoints();
+        List<Map.Entry<Integer, Double>> sortedValues = sortAllValues(allValues);
+
+        worst = (int) sortedValues.get(0).getKey();
+        good = (int) sortedValues.get(1).getKey();
+        best = (int) sortedValues.get(2).getKey();
     }
 
     public double evalFuncAtBestPoint() {
@@ -170,12 +172,12 @@ public class NelderMeade {
 
         calcGoodMidpoint();
         modMidpoint = goodMidpoint.multByN(2);
-        reflectMyVertex = modMidpoint.sub(allVertices.get(worst));
+        reflectedVertex = modMidpoint.sub(allVertices.get(worst));
     }
 
     public double evalFuncAtReflectPoint() {
         calcReflectionPoint();
-        return evalFuncAtPoint(reflectMyVertex);
+        return evalFuncAtPoint(reflectedVertex);
     }
 
     private void calcExpandPoint() {
@@ -183,29 +185,35 @@ public class NelderMeade {
 
         calcGoodMidpoint();
         calcReflectionPoint();
-        modReflectMyVertex = reflectMyVertex.multByN(2);
-        expandMyVertex = modReflectMyVertex.sub(goodMidpoint);
+        modReflectMyVertex = reflectedVertex.multByN(2);
+        expandedVertex = modReflectMyVertex.sub(goodMidpoint);
     }
 
     public double evalFuncAtExpandPoint() {
-        calcExpandPoint();;
-        return evalFuncAtPoint(this.expandMyVertex);
+        calcExpandPoint();
+        return evalFuncAtPoint(this.expandedVertex);
     }
 
-    public void calcBadMidpoint() {
+    private void calcBadMidpoint() {
         badMidpoint = calcMidpoint(allVertices.get(best), allVertices.get(worst));
-    }
-
-    public double evalFuncAtBadMidpoint() {
-        calcBadMidpoint();;
-        return evalFuncAtPoint(badMidpoint);
     }
 
     public int getNumPoints() {
         return numPoints;
     }
 
-    public int getNumIterations() {
-        return numIterations;
+    public void findLocalMin() {
+        int numIterations = 1;
+
+        while (verticesNotConverged()) {
+            if (isItBetterToReflect())
+                reflectOrExtend();
+            else
+                contractOrShrink();
+
+            calcBestGoodWorst();
+            numIterations++;
+        }
+        System.out.format("It took %d iterations to converge.", numIterations);
     }
 }

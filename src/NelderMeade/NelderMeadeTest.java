@@ -1,7 +1,5 @@
 package NelderMeade;
 
-import MyVertex.MyVertex;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -33,10 +31,6 @@ public class NelderMeadeTest {
         nm.calcBestGoodWorst();
     }
 
-    private double roundValue2Places(double val) {
-        return (double)Math.round(val * 100)/100;
-    }
-
     @Test
     public void canCreate() throws Exception {
         assertThat(nm, instanceOf(NelderMeade.class));
@@ -46,13 +40,13 @@ public class NelderMeadeTest {
     @Test
     public void testBestGoodWorst() throws Exception {
         assertEquals(nm.evalFuncAtBestPoint(), -3.36);
-        assertEquals(roundValue2Places(nm.evalFuncAtGoodPoint()), -0.16);
+        assertEquals(nm.evalFuncAtGoodPoint(), -0.16, 0.01);
         assertEquals(nm.evalFuncAtWorstPoint(), 0.0);
     }
 
     @Test
     public void testReflectionPoint() throws Exception {
-        assertEquals(roundValue2Places(nm.evalFuncAtReflectPoint()), -4.48);
+        assertEquals(nm.evalFuncAtReflectPoint(), -4.48, 0.01);
     }
 
     @Test
@@ -68,9 +62,9 @@ public class NelderMeadeTest {
     @Test
     public void testOptimization() throws Exception {
         nm.findLocalMin();
-        assertEquals(nm.evalFuncAtBestPoint(), -7.0);
-        assertEquals(nm.evalFuncAtGoodPoint(), -7.0);
-        assertEquals(nm.evalFuncAtWorstPoint(), -7.0);
+        assertEquals(nm.evalFuncAtBestPoint(), -6.99, 0.01);
+        assertEquals(nm.evalFuncAtGoodPoint(), -6.99, 0.01);
+        assertEquals(nm.evalFuncAtWorstPoint(), -6.99, 0.01);
         assertFalse(nm.verticesNotConverged());
     }
 }
