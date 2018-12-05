@@ -1,8 +1,8 @@
 package NelderMeade;
 
-import java.util.*;
-
 import MyVertex.MyVertex;
+
+import java.util.*;
 
 @FunctionalInterface
 interface UserDefinedFunc {
@@ -203,16 +203,15 @@ public class NelderMeade {
     }
 
     public void findLocalMin() {
-        int numIterations = 1;
-
-        while (verticesNotConverged()) {
+        int numIterations;
+        
+        for (numIterations = 1; verticesNotConverged(); numIterations++) {
             if (isItBetterToReflect())
                 reflectOrExtend();
             else
                 contractOrShrink();
 
             calcBestGoodWorst();
-            numIterations++;
         }
         System.out.format("It took %d iterations to converge.", numIterations);
     }
