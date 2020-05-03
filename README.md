@@ -1,1 +1,1 @@
-# NelderMead-Java
+# NelderMead
