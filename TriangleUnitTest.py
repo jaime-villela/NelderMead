@@ -16,15 +16,15 @@ class SimplexTriangleTestCase(unittest.TestCase):
         self.assertIsInstance(self.t, SimplexTriangle2Dim)
 
     def test_evaluate_function(self):
-        self.assertEquals("x:0.0, y:0.0, z:0.00", "{}".format(self.t.best))
-        self.assertEquals("x:1.2, y:0.0, z:-3.36", "{}".format(self.t.good))
-        self.assertEquals("x:0.0, y:0.8, z:-0.16", "{}".format(self.t.worst))
+        self.assertEquals("x:0.0, y:0.0, z:0.00", repr(self.t.best))
+        self.assertEquals("x:1.2, y:0.0, z:-3.36", repr(self.t.good))
+        self.assertEquals("x:0.0, y:0.8, z:-0.16", repr(self.t.worst))
 
     def test_vertices_sort(self):
         self.t.sort_vertices()
-        self.assertEquals("x:1.2, y:0.0, z:-3.36", "{}".format(self.t.best))
-        self.assertEquals("x:0.0, y:0.8, z:-0.16", "{}".format(self.t.good))
-        self.assertEquals("x:0.0, y:0.0, z:0.00", "{}".format(self.t.worst))
+        self.assertEquals("x:1.2, y:0.0, z:-3.36", repr(self.t.best))
+        self.assertEquals("x:0.0, y:0.8, z:-0.16", repr(self.t.good))
+        self.assertEquals("x:0.0, y:0.0, z:0.00", repr(self.t.worst))
 
     def test_calc_midpoint(self):
         self.t.sort_vertices()
@@ -43,7 +43,6 @@ class SimplexTriangleTestCase(unittest.TestCase):
 
     def test_print(self):
         print(self.t)
-
 
 if __name__ == '__main__':
     unittest.main()

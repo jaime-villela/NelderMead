@@ -1,3 +1,5 @@
+import numpy as np
+from matplotlib.patches import Polygon
 from Point import Point
 
 class SimplexTriangle2Dim:
@@ -12,11 +14,8 @@ class SimplexTriangle2Dim:
         self.expansion = None
         self.contraction = None
 
-    def __str__(self):
-        string1 = self.best.__str__()
-        string2 = self.good.__str__()
-        string3 = self.worst.__str__()
-        return string1 + "\n" + string2 + "\n" + string3
+    def __repr__(self):
+        return "BEST "+repr(self.best)+"\nGOOD "+repr(self.good)+"\nWORST "+repr(self.worst)
 
     def eval_func_at_vertices(self):
         self.best.evaluate_function(self.func)
@@ -41,14 +40,18 @@ class SimplexTriangle2Dim:
     def calc_mid_best_to_worst(self):
         self.mid_b_to_w = (self.best + self.worst) / 2
 
+    def get_good_to_worst_midpoint(self):
+        mid_g_to_w = (self.good + self.worst) / 2
+        return mid_g_to_w.x, mid_g_to_w.y
+
     def calc_reflection_point(self):
         self.calc_mid_best_to_good()
-        self.reflection = (self.mid_b_to_g * 2) - self.worst
+        self.reflection = (2 * self.mid_b_to_g) - self.worst
 
     def calc_expansion_point(self):
         self.calc_mid_best_to_good()
         self.calc_reflection_point()
-        self.expansion = (self.reflection * 2) - self.mid_b_to_g
+        self.expansion = (2 * self.reflection) - self.mid_b_to_g
 
     def is_reflection_lt_good(self):
         return self.reflection.z < self.good.z
@@ -69,11 +72,12 @@ class SimplexTriangle2Dim:
             self.worst = self.reflection
 
     def reflect_or_expand(self):
-        print("reflection")
         if self.best.z < self.reflection.z:
+            print("reflection")
             print("replace W with R")
             self.worst = self.reflection
         else:
+            print("expansion")
             self.expand()
 
     def shrink(self):
@@ -98,3 +102,10 @@ class SimplexTriangle2Dim:
             self.worst = self.contraction
         else:
             self.shrink()
+
+    def get_best_x_y(self):
+        return self.best.x, self.best.y
+
+    def get_vertices(self):
+        return np.array([[self.best.x, self.best.y], [self.good.x, self.good.y], [self.worst.x, self.worst.y]])
+
